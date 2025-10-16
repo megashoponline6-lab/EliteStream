@@ -1,0 +1,35 @@
+<% layout('layout') %>
+<h2>Catálogo (crea/edita, activa/desactiva, precios y logos)</h2>
+<div class="card" style="margin-bottom:16px">
+  <form action="/admin/products" method="post" class="grid cols-3">
+    <input class="input" name="name" placeholder="Nombre" required />
+    <input class="input" name="price" placeholder="Precio (MXN)" required />
+    <input class="input" name="logo_url" placeholder="Logo URL (https://...)" />
+    <input class="input" name="period" placeholder="Periodo (p.ej. 1M, 3M, Anual)" />
+    <input class="input" name="category" placeholder="Categoría (Streaming, Música, Otros)" />
+    <input class="input" name="details_template" placeholder="Plantilla de credenciales (opcional)" />
+    <button class="btn" type="submit">Guardar</button>
+  </form>
+</div>
+<table class="table card">
+  <thead><tr><th>Logo</th><th>Nombre</th><th>Precio</th><th>Periodo</th><th>Activo</th><th></th></tr></thead>
+  <tbody>
+  <% products.forEach(p=>{ %>
+    <tr>
+      <td><img class="logo" src="<%= p.logo_url %>"></td>
+      <td><%= p.name %></td>
+      <td>$<%= (p.price_cents/100).toFixed(2) %></td>
+      <td><%= p.period || '-' %></td>
+      <td><span class="badge"><%= p.active? 'Sí':'No' %></span></td>
+      <td>
+        <form method="post" action="/admin/product/<%= p.id %>/toggle" style="display:inline">
+          <button class="btn warn" type="submit"><%= p.active? 'Desactivar':'Activar' %></button>
+        </form>
+        <form method="post" action="/admin/product/<%= p.id %>/delete" style="display:inline" onsubmit="return confirm('¿Eliminar producto?')">
+          <button class="btn danger" type="submit">Eliminar</button>
+        </form>
+      </td>
+    </tr>
+  <% }) %>
+  </tbody>
+</table>

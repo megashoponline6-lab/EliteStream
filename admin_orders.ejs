@@ -1,0 +1,26 @@
+<% layout('layout') %>
+<h2>Órdenes</h2>
+<table class="table card">
+  <thead><tr><th>ID</th><th>Cliente</th><th>Producto</th><th>Total</th><th>Estado</th><th>Credenciales</th><th>Acciones</th></tr></thead>
+  <tbody>
+  <% orders.forEach(o=>{ %>
+    <tr>
+      <td><%= o.id %></td>
+      <td><%= o.user_email %></td>
+      <td><%= o.product_name %></td>
+      <td>$<%= (o.price_cents/100).toFixed(2) %></td>
+      <td><span class="badge"><%= o.status %></span></td>
+      <td style="max-width:360px"><%= o.credentials || '-' %></td>
+      <td>
+        <form action="/admin/orders/<%= o.id %>/credentials" method="post" style="display:grid;gap:6px;margin-bottom:8px">
+          <input class="input" name="credentials" placeholder="Pega o escribe credenciales (se verán en el panel del cliente)" />
+          <button class="btn safe" type="submit">Asignar/Actualizar</button>
+        </form>
+        <form action="/admin/orders/<%= o.id %>/cancel" method="post" onsubmit="return confirm('¿Cancelar esta orden y reembolsar puntos?')">
+          <button class="btn danger" type="submit">Cancelar</button>
+        </form>
+      </td>
+    </tr>
+  <% }) %>
+  </tbody>
+</table>

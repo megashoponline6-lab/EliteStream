@@ -1,0 +1,41 @@
+ELITESTREAM — GUÍA RÁPIDA
+
+1) Instalar
+   - Abre una terminal en la carpeta del proyecto
+   - Ejecuta:
+       npm install
+
+2) Configurar variables (.env)
+   - Copia ".env.example" y renómbralo a ".env"
+   - Deja o cambia estos valores:
+       ADMIN_USER=ml3838761
+       ADMIN_PASS=Camale0n4
+       SESSION_SECRET=lo_que_quieras_muy_secreto
+
+3) Ejecutar en local
+       npm start
+   - Abre http://localhost:3000
+   - Admin -> usa el usuario y contraseña del .env
+
+4) Subir a GitHub
+       git init
+       git add .
+       git commit -m "EliteStream FINAL"
+       git branch -M main
+       git remote add origin https://github.com/TU_USUARIO/elitestream.git
+       git push -u origin main
+
+5) Desplegar en Render
+   - Crea un Web Service desde tu repo
+   - Build: npm install
+   - Start: node server.js
+   - Añade Environment Variables en Render:
+       ADMIN_USER = (tu usuario admin)
+       ADMIN_PASS = (tu contraseña admin)
+       SESSION_SECRET = (una clave segura)
+   - (Opcional) Agrega un disco persistente en /opt/render/project/src/data
+
+Notas:
+- 1 punto = 1 MXN. El admin recarga puntos a clientes desde el panel.
+- Puedes editar precios, activar/desactivar productos y asignar credenciales.
+- El pago es externo; aquí se compra con puntos.

@@ -1,0 +1,24 @@
+<% layout('layout') %>
+<h2>Clientes registrados</h2>
+<table class="table card">
+  <thead><tr><th>ID</th><th>Email</th><th>Puntos</th><th>Alta</th><th>Acciones</th></tr></thead>
+  <tbody>
+  <% clients.forEach(c=>{ %>
+    <tr>
+      <td><%= c.id %></td>
+      <td><%= c.email %></td>
+      <td><b><%= c.points %></b></td>
+      <td><%= new Date(c.created_at).toLocaleString('es-MX') %></td>
+      <td>
+        <form action="/admin/clients/<%= c.id %>/points" method="post" style="display:inline-flex;gap:6px">
+          <input class="input" name="delta" style="width:120px" placeholder="± puntos" />
+          <button class="btn safe" type="submit">Actualizar</button>
+        </form>
+        <form action="/admin/clients/<%= c.id %>/delete" method="post" style="display:inline" onsubmit="return confirm('¿Eliminar cliente?')">
+          <button class="btn danger" type="submit">Eliminar</button>
+        </form>
+      </td>
+    </tr>
+  <% }) %>
+  </tbody>
+</table>

@@ -1,0 +1,9 @@
+<% layout('layout') %>
+<div class="card" style="max-width:520px;margin:0 auto">
+  <h2>Ingreso a Administración</h2>
+  <form action="/admin/login" method="post" style="display:grid;gap:12px;margin-top:12px">
+    <input class="input" name="user" placeholder="Usuario" required />
+    <input class="input" name="pass" placeholder="Contraseña" type="password" required />
+    <button class="btn warn" type="submit">Entrar</button>
+  </form>
+</div>

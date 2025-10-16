@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: elitestream
+    env: node
+    plan: free
+    region: oregon
+    buildCommand: npm install
+    startCommand: node server.js
+    runtime: node
+    nodeVersion: 22
+    envVars:
+      - key: SESSION_SECRET
+        generateValue: true
+    healthCheckPath: /
+    # Para persistencia en Render, agrega un disco y descomenta esto:
+    # disks:
+    #   - name: db
+    #     mountPath: /opt/render/project/src/data
+    #     sizeGB: 1

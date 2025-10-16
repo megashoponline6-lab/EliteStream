@@ -1,0 +1,10 @@
+<% layout('layout') %>
+<div class="card" style="max-width:520px;margin:0 auto">
+  <h2>Crear cuenta de cliente</h2>
+  <form action="/registro" method="post" style="display:grid;gap:12px;margin-top:12px">
+    <input class="input" name="email" placeholder="Correo" required />
+    <input class="input" name="password" type="password" placeholder="Contraseña" required />
+    <button class="btn safe" type="submit">Registrarme</button>
+  </form>
+  <p class="note">¿Ya tienes cuenta? <a href="/inicio">Inicia sesión</a></p>
+</div>
