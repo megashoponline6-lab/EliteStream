@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><%= title || 'EliteStream' %></title>
-  <link rel="stylesheet" href="/style.css" />
+  <link rel="stylesheet" href="/style.css">
 </head>
 <body>
   <header>
@@ -15,17 +15,20 @@
       </div>
       <div>
         <a href="/">Inicio</a>
-        <a href="/registro">Registrarse</a>
-        <a href="/inicio">Iniciar sesión</a>
-        <a href="/admin">Administración</a>
+        <% if (session && session.client) { %>
+          <a href="/catalogo">Catálogo</a>
+          <a href="/client/panel">Mi Panel</a>
+        <% } else { %>
+          <a href="/registro">Registrarse</a>
+          <a href="/inicio">Iniciar sesión</a>
+        <% } %>
+        <a href="/admin/login">Administración</a>
       </div>
     </nav>
   </header>
-
   <main class="container">
     <%- body %>
   </main>
-
   <footer class="container" style="text-align:center;margin-top:30px;color:var(--muted);font-size:14px">
     © <%= new Date().getFullYear() %> EliteStream - Todos los derechos reservados.
   </footer>
