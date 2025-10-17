@@ -1,18 +1,27 @@
 <% layout('layout') %>
+
 <h2>Mi Panel</h2>
 <p class="note">Aquí verás las credenciales de tus compras cuando estén listas (o al instante si el producto tiene plantilla).</p>
+
 <table class="table card">
-  <thead><tr><th>Orden</th><th>Producto</th><th>Total</th><th>Estado</th><th>Credenciales</th></tr></thead>
+  <thead>
+    <tr>
+      <th>Orden</th>
+      <th>Producto</th>
+      <th>Total</th>
+      <th>Estado</th>
+      <th>Credenciales</th>
+    </tr>
+  </thead>
   <tbody>
-    <% orders.forEach(o=>{ %>
+    <% orders.forEach(o => { %>
       <tr>
         <td><%= o.id %></td>
         <td><%= o.product_name %></td>
-        <td>$<%= (o.price_cents/100).toFixed(2) %></td>
+        <td>$<%= (o.price_cents / 100).toFixed(2) %></td>
         <td><span class="badge"><%= o.status %></span></td>
         <td style="max-width:420px"><%= o.credentials || '-' %></td>
       </tr>
     <% }) %>
   </tbody>
 </table>
-Mover client_panel.ejs a carpeta views
