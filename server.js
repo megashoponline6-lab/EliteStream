@@ -194,3 +194,4 @@ const PORT = process.env.PORT || 3000
 app.listen(PORT, ()=>{
   console.log(`✅ EliteStream listo en http://localhost:${PORT}`)
 })
+Reemplazar server.js por versión corregida
