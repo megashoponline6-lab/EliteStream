@@ -1,8 +1,10 @@
 <% layout('layout') %>
+
 <h2>Catálogo</h2>
-<p class="note">Saldo actual: <b><%= (client.points||0) %></b> puntos. (El pago es externo, tú recargas puntos y compras aquí.)</p>
+<p class="note">Saldo actual: <b><%= (client.points || 0) %></b> puntos. (El pago es externo, tú recargas puntos y compras aquí.)</p>
+
 <div class="grid cols-3">
-  <% products.filter(p=>p.active).forEach(p=>{ %>
+  <% products.filter(p => p.active).forEach(p => { %>
     <div class="card">
       <div style="display:flex;gap:12px;align-items:center;margin-bottom:8px">
         <img class="logo" src="<%= p.logo_url %>" alt="logo" />
@@ -11,14 +13,13 @@
           <div class="note"><%= p.period || '' %></div>
         </div>
       </div>
-      <div class="kpi"><b>$<%= (p.price_cents/100).toFixed(2) %></b> MXN</div>
+      <div class="kpi"><b>$<%= (p.price_cents / 100).toFixed(2) %></b> MXN</div>
       <form action="/comprar/<%= p.id %>" method="post" style="margin-top:10px">
-        <button class="btn safe" <%= client.points < (p.price_cents/100) ? 'disabled' : '' %>>Comprar con puntos</button>
+        <button class="btn safe" <%= client.points < (p.price_cents / 100) ? 'disabled' : '' %>>Comprar con puntos</button>
       </form>
-      <% if (client.points < (p.price_cents/100)) { %>
-        <div class="note">Te faltan <b><%= Math.ceil((p.price_cents/100) - client.points) %></b> puntos. Pide recarga por transferencia.</div>
+      <% if (client.points < (p.price_cents / 100)) { %>
+        <div class="note">Te faltan <b><%= Math.ceil((p.price_cents / 100) - client.points) %></b> puntos. Pide recarga por transferencia.</div>
       <% } %>
     </div>
-  <% }) %>
+  <% }); %>
 </div>
-Mover catalog.ejs a carpeta views
