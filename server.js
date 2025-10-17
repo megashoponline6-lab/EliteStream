@@ -156,17 +156,41 @@ app.use((req, res, next) => {
 });
 
 // ==========================
+//  Layout Helper para EJS
+// ==========================
+const originalRender = app.response.render;
+app.response.render = function (view, options = {}, cb) {
+  options.layout = (name) => { options._layoutFile = name };
+  options.body = '';
+  const self = this;
+
+  ejs.renderFile(path.join(__dirname, 'views', view + '.ejs'), { ...options }, (err, str) => {
+    if (err) return originalRender.call(self, view, options, cb);
+
+    if (options._layoutFile) {
+      options.body = str;
+      return ejs.renderFile(path.join(__dirname, 'views', options._layoutFile + '.ejs'), { ...options }, (e, str2) => {
+        if (e) return self.send(str);
+        return self.send(str2);
+      });
+    }
+
+    return self.send(str);
+  });
+};
+
+// ==========================
 //  Rutas principales
 // ==========================
+
+// Landing con logos destacados (de la versión 2)
 app.get('/', (req, res) => {
-  res.render('landing', { title: 'EliteStream — Inicio' });
+  const logos = db.prepare('SELECT name, logo_url FROM products WHERE active=1 LIMIT 12').all();
+  res.render('landing', { title: 'EliteStream — Inicio', logos });
 });
 
-// ==========================
-//  Registro
-// ==========================
+// Registro
 app.get('/registro', (req, res) => res.render('register', { title: 'Registrarme' }));
-
 app.post('/registro', async (req, res) => {
   const { email, password } = req.body;
 
@@ -184,11 +208,8 @@ app.post('/registro', async (req, res) => {
   }
 });
 
-// ==========================
-//  Login
-// ==========================
+// Login
 app.get('/inicio', (req, res) => res.render('login', { title: 'Iniciar sesión' }));
-
 app.post('/inicio', async (req, res) => {
   const { email, password } = req.body;
   const u = db.prepare('SELECT * FROM users WHERE email=?').get(safe(email));
@@ -204,14 +225,9 @@ app.post('/inicio', async (req, res) => {
 });
 
 // ==========================
-//  Catálogo, compras, panel cliente, admin, etc.
-//  (lo demás de tu código se mantiene igual 👌)
-// ==========================
-
-// ==========================
 //  Puerto
 // ==========================
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(✅ EliteStream listo en http://localhost:${PORT});
+  console.log(✅ EliteStream ejecutándose en el puerto ${PORT});
 });
