@@ -20,7 +20,7 @@ const app = express()
 app.use(helmet({ contentSecurityPolicy: false }))
 app.use(morgan('dev'))
 app.use(express.urlencoded({ extended: true }))
-app.use(express.json()) // 👈 importante para manejar JSON
+app.use(express.json())
 app.use(express.static(path.join(__dirname, 'public')))
 
 app.set('view engine', 'ejs')
@@ -74,10 +74,10 @@ const pesosToCents = n => Math.round(Number(n) * 100)
 const safe = t => sanitizeHtml(t || '', { allowedTags: [], allowedAttributes: {} })
 const logo = domain => `https://logo.clearbit.com/${domain}`
 
-// ====== Semillas de productos ======
+// ====== Semillas iniciales ======
 const seedProducts = () => {
-  const exists = db.prepare('SELECT COUNT(*) as c FROM products').get().c
-  if (exists > 0) return
+  const count = db.prepare('SELECT COUNT(*) as c FROM products').get().c
+  if (count > 0) return
   const items = [
     ['Disney con canales ESPN STAR',85,'1M','Streaming',logo('disneyplus.com')],
     ['HBO Max',65,'1M','Streaming',logo('max.com')],
@@ -130,29 +130,25 @@ const seedProducts = () => {
 }
 seedProducts()
 
-// ====== Vistas ======
+// ====== Middleware de sesión ======
 app.use((req,res,next)=>{
   res.locals.session = req.session
   next()
 })
 
-// ====== Página principal ======
+// ====== Landing ======
 app.get('/', (req,res)=>{
   const logos = db.prepare('SELECT name, logo_url FROM products WHERE active=1 LIMIT 12').all()
   res.render('landing', { title: 'EliteStream — Inicio', logos })
 })
 
-// ====== Registro de clientes ======
+// ====== Registro ======
 app.get('/registro', (req,res)=> res.render('register', { title:'Registrarme' }))
-
 app.post('/registro', (req,res)=>{
   const { email, password } = req.body
-
-  // ⚠️ Validación extra para evitar registros vacíos
   if (!email || !password || !email.trim()) {
     return res.status(400).send('<script>alert("Por favor llena todos los campos correctamente");window.location="/registro"</script>')
   }
-
   const hash = bcrypt.hashSync(password, 10)
   try {
     db.prepare('INSERT INTO users(email,password_hash,role,points) VALUES(?,?,\"client\",0)').run(safe(email), hash)
@@ -162,7 +158,7 @@ app.post('/registro', (req,res)=>{
   res.redirect('/inicio')
 })
 
-// ====== Login de clientes ======
+// ====== Login ======
 app.get('/inicio', (req,res)=> res.render('login', { title:'Iniciar sesión' }))
 app.post('/inicio', (req,res)=>{
   const { email, password } = req.body
@@ -193,7 +189,8 @@ app.response.render = function(view, options={}, cb){
   })
 }
 
+// ====== Puerto ======
 const PORT = process.env.PORT || 3000
 app.listen(PORT, ()=>{
-  console.log(`EliteStream listo en http://localhost:${PORT}`)
+  console.log(`✅ EliteStream listo en http://localhost:${PORT}`)
 })
