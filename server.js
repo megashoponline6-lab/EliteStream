@@ -190,6 +190,14 @@ app.response.render = function(view, options={}, cb){
 }
 
 // ====== Puerto ======
+// ⚠️ Ruta temporal para limpiar todo
+app.get('/admin/reset-all', (req, res) => {
+  db.prepare('DELETE FROM orders').run();
+  db.prepare('DELETE FROM users').run();
+  db.prepare('DELETE FROM products').run();
+  res.send('✅ Base de datos completamente vacía');
+});
+
 const PORT = process.env.PORT || 3000
 app.listen(PORT, ()=>{
   console.log(`✅ EliteStream listo en http://localhost:${PORT}`)
