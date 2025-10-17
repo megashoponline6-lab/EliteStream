@@ -8,14 +8,19 @@ import { fileURLToPath } from 'url'
 import Database from 'better-sqlite3'
 import bcrypt from 'bcryptjs'
 import sanitizeHtml from 'sanitize-html'
+import fs from 'fs'
+import ejs from 'ejs'
+import { v4 as uuidv4 } from 'uuid'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 const app = express()
 
+// Seguridad y middlewares
 app.use(helmet({ contentSecurityPolicy: false }))
 app.use(morgan('dev'))
 app.use(express.urlencoded({ extended: true }))
+app.use(express.json()) // 👈 importante para manejar JSON
 app.use(express.static(path.join(__dirname, 'public')))
 
 app.set('view engine', 'ejs')
@@ -28,7 +33,6 @@ app.use(session({
 }))
 
 // ====== DB ======
-import fs from 'fs'
 const dataDir = path.join(__dirname, 'data')
 if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir)
 const db = new Database(path.join(dataDir, 'elite.db'))
@@ -66,12 +70,11 @@ CREATE TABLE IF NOT EXISTS orders(
 `)
 
 // ====== Util ======
-import { v4 as uuidv4 } from 'uuid'
 const pesosToCents = n => Math.round(Number(n) * 100)
-const safe = t => sanitizeHtml(t||'', { allowedTags: [], allowedAttributes: {} })
+const safe = t => sanitizeHtml(t || '', { allowedTags: [], allowedAttributes: {} })
 const logo = domain => `https://logo.clearbit.com/${domain}`
 
-// ====== Seed Catálogo ======
+// ====== Semillas de productos ======
 const seedProducts = () => {
   const exists = db.prepare('SELECT COUNT(*) as c FROM products').get().c
   if (exists > 0) return
@@ -133,120 +136,33 @@ app.use((req,res,next)=>{
   next()
 })
 
-// ====== Rutas Públicas ======
+// ====== Página principal ======
 app.get('/', (req,res)=>{
-  const logos = db.prepare('SELECT name, logo_url FROM products WHERE active=1 LIMIT 12').all().map(r=>({name:r.name,logo_url:r.logo_url}))
+  const logos = db.prepare('SELECT name, logo_url FROM products WHERE active=1 LIMIT 12').all()
   res.render('landing', { title: 'EliteStream — Inicio', logos })
 })
 
-// ====== Admin ======
-const ADMIN_USER = process.env.ADMIN_USER
-const ADMIN_PASS = process.env.ADMIN_PASS
-
-const adminOnly = (req,res,next)=>{
-  if (req.session && req.session.admin) return next()
-  return res.redirect('/admin/login')
-}
-
-app.get('/admin', (req,res)=>{
-  if (!req.session.admin) return res.render('admin_login', { title: 'Admin – Ingresar' })
-  const stats = {
-    users: db.prepare('SELECT COUNT(*) as c FROM users').get().c + 350,
-    sales: db.prepare("SELECT COALESCE(SUM(price_cents),0) as s FROM orders WHERE status='pagado'").get().s,
-    orders: db.prepare('SELECT COUNT(*) as c FROM orders').get().c
-  }
-  res.render('admin_dashboard', { title: 'Admin – Panel', stats })
-})
-
-app.get('/admin/login', (req,res)=> res.render('admin_login', { title: 'Admin – Ingresar' }))
-app.post('/admin/login', (req,res)=>{
-  const { user, pass } = req.body
-  if (!ADMIN_USER || !ADMIN_PASS) {
-    return res.status(500).send('<script>alert("Faltan variables ADMIN_USER/ADMIN_PASS en .env");window.location="/admin/login"</script>')
-  }
-  if (user === ADMIN_USER && pass === ADMIN_PASS){
-    req.session.admin = true
-    return res.redirect('/admin')
-  }
-  return res.status(401).send('<script>alert("Credenciales inválidas");window.location="/admin/login"</script>')
-})
-
-app.get('/admin/products', adminOnly, (req,res)=>{
-  const products = db.prepare('SELECT * FROM products ORDER BY id DESC').all()
-  res.render('admin_products', { title: 'Admin – Productos', products })
-})
-app.post('/admin/products', adminOnly, (req,res)=>{
-  const { name, price, logo_url, period, category, details_template } = req.body
-  db.prepare('INSERT INTO products(name,price_cents,logo_url,period,category,details_template,active) VALUES(?,?,?,?,?,?,1)')
-    .run(safe(name), Math.max(0, Math.round(Number(price)*100)), safe(logo_url), safe(period), safe(category), safe(details_template))
-  res.redirect('/admin/products')
-})
-app.post('/admin/product/:id/toggle', adminOnly, (req,res)=>{
-  const p = db.prepare('SELECT * FROM products WHERE id=?').get(req.params.id)
-  if (!p) return res.redirect('/admin/products')
-  db.prepare('UPDATE products SET active=? WHERE id=?').run(p.active?0:1, p.id)
-  res.redirect('/admin/products')
-})
-app.post('/admin/product/:id/delete', adminOnly, (req,res)=>{
-  db.prepare('DELETE FROM products WHERE id=?').run(req.params.id)
-  res.redirect('/admin/products')
-})
-
-app.get('/admin/clients', adminOnly, (req,res)=>{
-  const clients = db.prepare('SELECT * FROM users ORDER BY id DESC').all()
-  res.render('admin_clients', { title: 'Admin – Clientes', clients })
-})
-app.post('/admin/clients/:id/points', adminOnly, (req,res)=>{
-  const id = Number(req.params.id)
-  const delta = Math.round(Number(req.body.delta||0))
-  db.prepare('UPDATE users SET points = MAX(0, points + ?) WHERE id=?').run(delta, id)
-  res.redirect('/admin/clients')
-})
-app.post('/admin/clients/:id/delete', adminOnly, (req,res)=>{
-  db.prepare('DELETE FROM users WHERE id=?').run(req.params.id)
-  db.prepare('DELETE FROM orders WHERE user_id=?').run(req.params.id)
-  res.redirect('/admin/clients')
-})
-
-app.get('/admin/orders', adminOnly, (req,res)=>{
-  const orders = db.prepare(`
-    SELECT o.*, u.email as user_email, p.name as product_name
-    FROM orders o JOIN users u ON u.id=o.user_id JOIN products p ON p.id=o.product_id
-    ORDER BY o.created_at DESC
-  `).all()
-  res.render('admin_orders', { title: 'Admin – Órdenes', orders })
-})
-app.post('/admin/orders/:id/credentials', adminOnly, (req,res)=>{
-  const id = req.params.id
-  const credentials = safe(req.body.credentials)
-  db.prepare('UPDATE orders SET credentials=?, status=? WHERE id=?').run(credentials,'pagado',id)
-  res.redirect('/admin/orders')
-})
-app.post('/admin/orders/:id/cancel', adminOnly, (req,res)=>{
-  const id = req.params.id
-  const o = db.prepare('SELECT * FROM orders WHERE id=?').get(id)
-  if (o) {
-    const pointsBack = Math.round(o.price_cents/100)
-    db.prepare('UPDATE users SET points=points+? WHERE id=?').run(pointsBack, o.user_id)
-    db.prepare('UPDATE orders SET status=? WHERE id=?').run('cancelado', id)
-  }
-  res.redirect('/admin/orders')
-})
-
-// ====== Autenticación Clientes ======
+// ====== Registro de clientes ======
 app.get('/registro', (req,res)=> res.render('register', { title:'Registrarme' }))
+
 app.post('/registro', (req,res)=>{
   const { email, password } = req.body
-  if (!email || !password) return res.redirect('/registro')
+
+  // ⚠️ Validación extra para evitar registros vacíos
+  if (!email || !password || !email.trim()) {
+    return res.status(400).send('<script>alert("Por favor llena todos los campos correctamente");window.location="/registro"</script>')
+  }
+
   const hash = bcrypt.hashSync(password, 10)
   try {
     db.prepare('INSERT INTO users(email,password_hash,role,points) VALUES(?,?,\"client\",0)').run(safe(email), hash)
   } catch(e){
-    return res.status(400).send('<script>alert("Ese correo ya existe");window.location="/registro"</script>')
+    return res.status(400).send('<script>alert("Ese correo ya existe o es inválido");window.location="/registro"</script>')
   }
   res.redirect('/inicio')
 })
 
+// ====== Login de clientes ======
 app.get('/inicio', (req,res)=> res.render('login', { title:'Iniciar sesión' }))
 app.post('/inicio', (req,res)=>{
   const { email, password } = req.body
@@ -258,54 +174,7 @@ app.post('/inicio', (req,res)=>{
   res.redirect('/catalogo')
 })
 
-app.get('/salir', (req,res)=>{ req.session.destroy(()=>res.redirect('/')) })
-
-const clientOnly = (req,res,next)=>{
-  if (req.session && req.session.client) return next()
-  return res.redirect('/inicio')
-}
-
-app.get('/catalogo', (req,res)=>{
-  const products = db.prepare('SELECT * FROM products WHERE active=1 ORDER BY id DESC').all()
-  let client = { points: 0 }
-  if (req.session.client){
-    client = db.prepare('SELECT * FROM users WHERE id=?').get(req.session.client.id)
-  }
-  res.render('catalog', { title:'Catálogo', products, client })
-})
-
-app.post('/comprar/:id', clientOnly, (req,res)=>{
-  const product = db.prepare('SELECT * FROM products WHERE id=? AND active=1').get(req.params.id)
-  if (!product) return res.redirect('/catalogo')
-  const user = db.prepare('SELECT * FROM users WHERE id=?').get(req.session.client.id)
-  const needPoints = Math.round(product.price_cents/100)
-  if (user.points < needPoints){
-    return res.status(400).send('<script>alert("No tienes suficientes puntos. Pide recarga al administrador.");window.location="/catalogo"</script>')
-  }
-  db.prepare('UPDATE users SET points=points-? WHERE id=?').run(needPoints, user.id)
-  const id = uuidv4()
-  let creds = null
-  if (product.details_template){
-    creds = product.details_template.replace('{{email}}', user.email)
-  }
-  const status = creds ? 'pagado' : 'pendiente'
-  db.prepare('INSERT INTO orders(id,user_id,product_id,price_cents,status,credentials) VALUES(?,?,?,?,?,?)')
-    .run(id, user.id, product.id, product.price_cents, status, creds)
-  res.redirect('/panel')
-})
-
-app.get('/panel', clientOnly, (req,res)=>{
-  const u = db.prepare('SELECT * FROM users WHERE id=?').get(req.session.client.id)
-  const orders = db.prepare(`
-    SELECT o.*, p.name as product_name FROM orders o
-    JOIN products p ON p.id=o.product_id
-    WHERE o.user_id=? ORDER BY o.created_at DESC
-  `).all(u.id)
-  res.render('client_panel', { title:'Mi Panel', orders })
-})
-
 // ====== Layout helper ======
-import ejs from 'ejs'
 const originalRender = app.response.render
 app.response.render = function(view, options={}, cb){
   options.layout = (name)=>{ options._layoutFile = name }
