@@ -1,11 +1,22 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <title>EliteStream</title>
-</head>
-<body>
-  <h1>🎉 Bienvenido a EliteStream</h1>
-  <p>La página está funcionando correctamente 🚀</p>
-</body>
-</html>
+<% layout('layout') %>
+<div class="hero">
+  <div class="card">
+    <h1>EliteStream – como la página del iPhone 15, pero para tus ventas</h1>
+    <p class="note">Más de <b>350</b> usuarios ya están registrados ✅. Compra y administración en un solo lugar.</p>
+    <div style="display:flex;gap:12px;margin-top:14px">
+      <a class="btn safe" href="/registro">Quiero ser cliente</a>
+      <a class="btn warn" href="/admin">Administración</a>
+    </div>
+  </div>
+  <div class="grid cols-3">
+    <% logos.slice(0,9).forEach(l=>{ %>
+      <div class="card" style="display:flex;gap:12px;align-items:center">
+        <img class="logo" src="<%= l.logo_url %>" alt="logo"/>
+        <div>
+          <div><b><%= l.name %></b></div>
+          <div class="note"><%= l.note || '' %></div>
+        </div>
+      </div>
+    <% }) %>
+  </div>
+</div>
