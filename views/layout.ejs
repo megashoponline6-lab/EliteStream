@@ -1,7 +1,33 @@
-<%- include('partials/head', { title }) %>
-<%- include('partials/nav', { session }) %>
-<div class="container">
-  <%- body %>
-</div>
-</body></html>
-Mover layout.ejs a carpeta views
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title><%= title || 'EliteStream' %></title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <header>
+    <nav class="nav container">
+      <div class="brand">
+        <span class="dot"></span>
+        EliteStream
+      </div>
+      <div>
+        <a href="/">Inicio</a>
+        <a href="/registro">Registrarse</a>
+        <a href="/login">Iniciar sesión</a>
+        <a href="/admin">Administración</a>
+      </div>
+    </nav>
+  </header>
+
+  <main class="container">
+    <%- body %>
+  </main>
+
+  <footer class="container" style="text-align:center;margin-top:30px;color:var(--muted);font-size:14px">
+    © <%= new Date().getFullYear() %> EliteStream - Todos los derechos reservados.
+  </footer>
+</body>
+</html>
